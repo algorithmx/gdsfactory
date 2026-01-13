@@ -202,6 +202,7 @@ Icon?
 *.lms
 *.wpr
 *.wpu
+*.png
 .pytest_cache
 
 # Fab-specific

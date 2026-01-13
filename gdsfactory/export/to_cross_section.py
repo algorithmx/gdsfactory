@@ -39,6 +39,7 @@ def to_cross_section(
     filename: str | Path | None = None,
     show: bool = False,
     dpi: int = 150,
+    vertical_exaggeration: float = 1.0,
     **kwargs: Any,
 ) -> Figure | None:
     """Generate vertical cross-section image from GDS file or Component.
@@ -57,6 +58,9 @@ def to_cross_section(
         filename: Output PNG filename. If None, returns figure without saving.
         show: If True, display the plot interactively.
         dpi: Resolution for output image.
+        vertical_exaggeration: Factor to exaggerate vertical (Z) scale relative to
+            horizontal scale. Values > 1.0 stretch the vertical direction.
+            Defaults to 1.0 (equal aspect ratio).
         **kwargs: Additional arguments passed to matplotlib.
 
     Returns:
@@ -126,6 +130,7 @@ def to_cross_section(
         filename=filename,
         show=show,
         dpi=dpi,
+        vertical_exaggeration=vertical_exaggeration,
         **kwargs,
     )
 
@@ -361,6 +366,7 @@ def _render_cross_section(
     filename: str | Path | None = None,
     show: bool = False,
     dpi: int = 150,
+    vertical_exaggeration: float = 1.0,
     **kwargs: Any,
 ) -> Figure:
     """Render cross-section profiles to matplotlib figure.
@@ -372,6 +378,8 @@ def _render_cross_section(
         filename: Output PNG filename.
         show: If True, display the plot interactively.
         dpi: Resolution for output image.
+        vertical_exaggeration: Factor to exaggerate vertical scale. Values > 1.0
+            stretch the vertical direction for better visibility.
         **kwargs: Additional matplotlib arguments.
 
     Returns:
@@ -443,10 +451,18 @@ def _render_cross_section(
     xlabel = "Y (µm)" if plane_direction == "x" else "X (µm)"
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Z (µm)")
-    ax.set_title(f"Cross-Section at {plane_direction.upper()} = {plane_position:.3f} µm")
+    
+    # Add vertical exaggeration info to title if not equal aspect
+    if vertical_exaggeration != 1.0:
+        ax.set_title(f"Cross-Section at {plane_direction.upper()} = {plane_position:.3f} µm (VE: {vertical_exaggeration}x)")
+    else:
+        ax.set_title(f"Cross-Section at {plane_direction.upper()} = {plane_position:.3f} µm")
 
-    # Set aspect ratio
-    ax.set_aspect("equal")
+    # Set aspect ratio with vertical exaggeration
+    # aspect ratio = data_units_per_display_unit for y / data_units_per_display_unit for x
+    # To stretch vertical (Z), we want fewer Z units per display unit, so aspect < 1
+    # vertical_exaggeration > 1 means stretch Z, so aspect = 1/VE
+    ax.set_aspect(vertical_exaggeration)
 
     # Add grid
     ax.grid(True, alpha=0.3)
